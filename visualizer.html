@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cifra Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        input[type="file"] {
+            flex: 1;
+            padding: 10px;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        .cifra-display {
+            padding: 40px;
+            font-size: 16px;
+            line-height: 2;
+        }
+
+        .cifra-line {
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .chord-line {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .lyric-line {
+            color: #333;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 60px 20px;
+        }
+
+        .info {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎸 Cifra Visualizer</h1>
+            <p>Guitar Chord Sheets</p>
+        </div>
+        
+        <div class="controls">
+            <input type="file" id="cifraFile" accept=".txt,.md" />
+            <button onclick="loadExample()">Load Example</button>
+        </div>
+
+        <div class="cifra-display" id="cifraDisplay">
+            <div class="empty-state">
+                <p>📁 Select a cifra file to visualize</p>
+                <p style="margin-top: 10px; font-size: 14px;">or click "Load Example" to see a demo</p>
+            </div>
+        </div>
+
+        <div class="info">
+            <p>Drop a .txt or .md cifra file above to visualize it</p>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('cifraFile');
+        const display = document.getElementById('cifraDisplay');
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    parseCifra(event.target.result);
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function parseCifra(text) {
+            const lines = text.split('\n');
+            let html = '';
+            let i = 0;
+
+            while (i < lines.length) {
+                const line = lines[i];
+                const nextLine = lines[i + 1];
+                
+                if (!line.trim()) {
+                    html += '<div style="height: 15px;"></div>';
+                    i++;
+                    continue;
+                }
+
+                // Check if this looks like a chord line (has chord-like patterns)
+                const chordPattern = /^[\s]*[A-G][#b]?(m|maj|min|dim|aug|sus|add)?[0-9]*(\/[A-G][#b]?)?[\s]*$/;
+                const hasChords = line.match(/[A-G][#b]?(m|maj|min|dim|aug|sus|add)?[0-9]*(\/[A-G][#b]?)?/g);
+                
+                if (hasChords && hasChords.length > 0 && nextLine && nextLine.trim()) {
+                    // This is likely a chord line
+                    html += '<div class="cifra-line">';
+                    html += `<div class="chord-line">${escapeHtml(line)}</div>`;
+                    html += `<div class="lyric-line">${escapeHtml(nextLine)}</div>`;
+                    html += '</div>';
+                    i += 2;
+                } else {
+                    // Regular line
+                    html += `<div class="cifra-line"><div class="lyric-line">${escapeHtml(line)}</div></div>`;
+                    i++;
+                }
+            }
+
+            display.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function loadExample() {
+            const exampleCifra = `C       
+I can show you the world
+         Am         G
+Shining, shimmering splendid
+          Dm          Am
+Tell me, princess, now when did
+          F           C
+You last let your heart decide?
+
+C     
+I can open your eyes
+         Am         G
+Take you wonder by wonder
+         Dm         Am
+Over sideways and under
+     F     C
+On a magic carpet ride
+
+             G C
+A whole new world
+         G      E7       Am
+A new fantastic point of view`;
+
+            parseCifra(exampleCifra);
+        }
+
+        // Drag and drop support
+        const container = document.querySelector('.container');
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            container.style.opacity = '0.8';
+        });
+
+        container.addEventListener('dragleave', () => {
+            container.style.opacity = '1';
+        });
+
+        container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            container.style.opacity = '1';
+            const file = e.dataTransfer.files[0];
+            if (file && (file.name.endsWith('.txt') || file.name.endsWith('.md'))) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    parseCifra(event.target.result);
+                };
+                reader.readAsText(file);
+            }
+        });
+    </script>
+</body>
+</html>
