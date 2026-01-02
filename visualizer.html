@@ -71,6 +71,27 @@
             background: #5568d3;
         }
 
+        .song-info {
+            padding: 15px 40px;
+            background: #fff3cd;
+            border-bottom: 2px solid #ffc107;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            font-weight: bold;
+            color: #856404;
+        }
+
+        .info-label {
+            color: #666;
+            margin-right: 5px;
+        }
+
         .cifra-display {
             padding: 40px;
             font-size: 16px;
@@ -88,6 +109,39 @@
             margin-bottom: 5px;
         }
 
+        .chord-inline {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+
+        .chord-inline:hover {
+            background: #f0f0ff;
+        }
+
+        .chord-diagram-popup {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            white-space: nowrap;
+            margin-bottom: 5px;
+        }
+
+        .chord-inline:hover .chord-diagram-popup {
+            display: block;
+        }
+
         .lyric-line {
             color: #333;
         }
@@ -96,6 +150,42 @@
             text-align: center;
             color: #999;
             padding: 60px 20px;
+        }
+
+        .chord-list {
+            padding: 30px 40px;
+            background: #f8f9fa;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .chord-list h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        .chord-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 20px;
+            justify-items: center;
+        }
+
+        .chord-item {
+            text-align: center;
+        }
+
+        .chord-name-label {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .chord-diagram-svg {
+            width: 80px;
+            height: 100px;
         }
 
         .info {
@@ -127,13 +217,103 @@
         </div>
 
         <div class="info">
-            <p>Drop a .txt or .md cifra file above to visualize it</p>
+            <p>Drop a .txt or .md cifra file above to visualize it | Hover over chords to see diagrams</p>
         </div>
     </div>
 
     <script>
         const fileInput = document.getElementById('cifraFile');
         const display = document.getElementById('cifraDisplay');
+
+        // Chord diagram database with frets and finger positions
+        const chordDiagrams = {
+            'C': { 
+                frets: [-1, 3, 2, 0, 1, 0],
+                fingers: [0, 3, 2, 0, 1, 0]
+            },
+            'C7': { 
+                frets: [-1, 3, 2, 3, 1, 0],
+                fingers: [0, 3, 2, 4, 1, 0]
+            },
+            'D': { 
+                frets: [-1, -1, 0, 2, 3, 2],
+                fingers: [0, 0, 0, 1, 3, 2]
+            },
+            'Dm': { 
+                frets: [-1, -1, 0, 2, 3, 1],
+                fingers: [0, 0, 0, 2, 3, 1]
+            },
+            'D7': { 
+                frets: [-1, -1, 0, 2, 1, 2],
+                fingers: [0, 0, 0, 2, 1, 3]
+            },
+            'E': { 
+                frets: [0, 2, 2, 1, 0, 0],
+                fingers: [0, 2, 3, 1, 0, 0]
+            },
+            'Em': { 
+                frets: [0, 2, 2, 0, 0, 0],
+                fingers: [0, 2, 3, 0, 0, 0]
+            },
+            'E7': { 
+                frets: [0, 2, 0, 1, 0, 0],
+                fingers: [0, 2, 0, 1, 0, 0]
+            },
+            'F': { 
+                frets: [1, 3, 3, 2, 1, 1],
+                fingers: [1, 3, 4, 2, 1, 1]
+            },
+            'Fm': { 
+                frets: [1, 3, 3, 1, 1, 1],
+                fingers: [1, 3, 4, 1, 1, 1]
+            },
+            'G': { 
+                frets: [3, 2, 0, 0, 0, 3],
+                fingers: [3, 2, 0, 0, 0, 4]
+            },
+            'Gm': { 
+                frets: [3, 5, 5, 3, 3, 3],
+                fingers: [1, 3, 4, 1, 1, 1]
+            },
+            'G7': { 
+                frets: [3, 2, 0, 0, 0, 1],
+                fingers: [3, 2, 0, 0, 0, 1]
+            },
+            'A': { 
+                frets: [-1, 0, 2, 2, 2, 0],
+                fingers: [0, 0, 1, 2, 3, 0]
+            },
+            'Am': { 
+                frets: [-1, 0, 2, 2, 1, 0],
+                fingers: [0, 0, 2, 3, 1, 0]
+            },
+            'A7': { 
+                frets: [-1, 0, 2, 0, 2, 0],
+                fingers: [0, 0, 2, 0, 1, 0]
+            },
+            'B': { 
+                frets: [-1, 2, 4, 4, 4, 2],
+                fingers: [0, 1, 3, 3, 3, 1]
+            },
+            'Bm': { 
+                frets: [-1, 2, 4, 4, 3, 2],
+                fingers: [0, 1, 3, 4, 2, 1]
+            },
+            'B7': { 
+                frets: [-1, 2, 1, 2, 0, 2],
+                fingers: [0, 2, 1, 3, 0, 4]
+            },
+            'Bb': { 
+                frets: [-1, 1, 3, 3, 3, 1],
+                fingers: [0, 1, 2, 3, 4, 1]
+            },
+            'Bbm': { 
+                frets: [-1, 1, 3, 3, 2, 1],
+                fingers: [0, 1, 3, 4, 2, 1]
+            }
+        };
+
+        let usedChords = new Set();
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -147,10 +327,29 @@
         });
 
         function parseCifra(text) {
+            usedChords.clear();
+            
+            // Detect capo and key
+            let capo = null;
+            let key = null;
+            const capoMatch = text.match(/(?:capo|capotraste).*?(\d+)/i);
+            const keyMatch = text.match(/(?:tom|key).*?([A-G][#b]?m?)/i);
+            
+            if (capoMatch) capo = capoMatch[1];
+            if (keyMatch) key = keyMatch[1];
+            
             const lines = text.split('\n');
             let html = '';
+            
+            // Add song info if capo or key detected
+            if (capo || key) {
+                html += '<div class="song-info">';
+                if (key) html += `<div class="info-item"><span class="info-label">Key:</span>${key}</div>`;
+                if (capo) html += `<div class="info-item"><span class="info-label">Capo:</span>Fret ${capo}</div>`;
+                html += '</div>';
+            }
+            
             let i = 0;
-
             while (i < lines.length) {
                 const line = lines[i];
                 const nextLine = lines[i + 1];
@@ -161,25 +360,124 @@
                     continue;
                 }
 
-                // Check if this looks like a chord line (has chord-like patterns)
-                const chordPattern = /^[\s]*[A-G][#b]?(m|maj|min|dim|aug|sus|add)?[0-9]*(\/[A-G][#b]?)?[\s]*$/;
-                const hasChords = line.match(/[A-G][#b]?(m|maj|min|dim|aug|sus|add)?[0-9]*(\/[A-G][#b]?)?/g);
+                const hasChords = line.match(/[A-G][#b]?(m|maj|min|dim|aug|sus|add|7)?[0-9]*(\/[A-G][#b]?)?/g);
                 
                 if (hasChords && hasChords.length > 0 && nextLine && nextLine.trim()) {
-                    // This is likely a chord line
                     html += '<div class="cifra-line">';
-                    html += `<div class="chord-line">${escapeHtml(line)}</div>`;
+                    html += `<div class="chord-line">${wrapChords(line)}</div>`;
                     html += `<div class="lyric-line">${escapeHtml(nextLine)}</div>`;
                     html += '</div>';
                     i += 2;
                 } else {
-                    // Regular line
                     html += `<div class="cifra-line"><div class="lyric-line">${escapeHtml(line)}</div></div>`;
                     i++;
                 }
             }
 
             display.innerHTML = html;
+            displayChordList();
+        }
+
+        function wrapChords(line) {
+            // Replace chord patterns with wrapped spans
+            return line.replace(/([A-G][#b]?(m|maj|min|dim|aug|sus|add|7)?[0-9]*(\/[A-G][#b]?)?)/g, (match) => {
+                usedChords.add(match);
+                const diagram = createChordDiagram(match);
+                return `<span class="chord-inline">${match}${diagram}</span>`;
+            });
+        }
+
+        function createChordDiagram(chordName) {
+            const chordData = chordDiagrams[chordName];
+            if (!chordData) return '';
+            
+            const svg = createSVGDiagram(chordData.frets, chordData.fingers, chordName);
+            return `<div class="chord-diagram-popup">${svg}</div>`;
+        }
+
+        function createSVGDiagram(frets, fingers, chordName) {
+            const width = 80;
+            const height = 100;
+            const stringSpacing = 12;
+            const fretSpacing = 20;
+            const startX = 10;
+            const startY = 15;
+            const nutY = startY + 10;
+
+            let svg = `<svg class="chord-diagram-svg" viewBox="0 0 ${width} ${height}">`;
+            if (chordName) {
+                svg += `<text x="40" y="12" text-anchor="middle" font-size="12" fill="#667eea" font-weight="bold">${chordName}</text>`;
+            }
+            
+            // Draw strings (vertical lines)
+            for (let i = 0; i < 6; i++) {
+                const x = startX + i * stringSpacing;
+                svg += `<line x1="${x}" y1="${nutY}" x2="${x}" y2="${startY + 80}" stroke="#333" stroke-width="1"/>`;
+            }
+
+            // Draw frets (horizontal lines)
+            for (let i = 0; i < 5; i++) {
+                const y = nutY + i * fretSpacing;
+                svg += `<line x1="${startX}" y1="${y}" x2="${startX + 5 * stringSpacing}" y2="${y}" stroke="#333" stroke-width="${i === 0 ? '2' : '1'}"/>`;
+            }
+
+            // Draw finger positions
+            for (let i = 0; i < 6; i++) {
+                const fret = frets[i];
+                const finger = fingers[i];
+                const x = startX + i * stringSpacing;
+                
+                if (fret === 0) {
+                    // Open string - draw circle
+                    svg += `<circle cx="${x}" cy="${nutY - 5}" r="3" fill="none" stroke="#333" stroke-width="1.5"/>`;
+                } else if (fret > 0) {
+                    // Fingered note
+                    const y = nutY + (fret - 0.5) * fretSpacing;
+                    svg += `<circle cx="${x}" cy="${y}" r="5" fill="#667eea" stroke="#333" stroke-width="1"/>`;
+                    
+                    // Draw finger number if > 0
+                    if (finger > 0) {
+                        svg += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="10" fill="white" font-weight="bold">${finger}</text>`;
+                    }
+                } else {
+                    // Muted string - draw X
+                    svg += `<text x="${x}" y="${nutY - 2}" text-anchor="middle" font-size="14" fill="#999" font-weight="bold">×</text>`;
+                }
+            }
+
+            svg += `</svg>`;
+            return svg;
+        }
+
+        function displayChordList() {
+            const sortedChords = Array.from(usedChords).sort();
+            
+            if (sortedChords.length === 0) return;
+            
+            const chordListHtml = `
+                <div class="chord-list">
+                    <h3>Chords Used in This Song</h3>
+                    <div class="chord-grid">
+                        ${sortedChords.map(chord => {
+                            const chordData = chordDiagrams[chord];
+                            if (!chordData) return `
+                                <div class="chord-item">
+                                    <div class="chord-name-label">${chord}</div>
+                                    <p style="font-size: 12px; color: #999;">No diagram</p>
+                                </div>
+                            `;
+                            return `
+                                <div class="chord-item">
+                                    <div class="chord-name-label">${chord}</div>
+                                    ${createSVGDiagram(chordData.frets, chordData.fingers, '')}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            
+            display.innerHTML += chordListHtml;
         }
 
         function escapeHtml(text) {
@@ -189,7 +487,10 @@
         }
 
         function loadExample() {
-            const exampleCifra = `C       
+            const exampleCifra = `Key: C
+Capo: 2
+
+C       
 I can show you the world
          Am         G
 Shining, shimmering splendid
